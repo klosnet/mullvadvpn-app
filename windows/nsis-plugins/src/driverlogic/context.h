@@ -33,26 +33,10 @@ public:
 		}
 	};
 
-	enum class BaselineStatus
-	{
-		NO_TAP_ADAPTERS_PRESENT,
-		SOME_TAP_ADAPTERS_PRESENT,
-		MULLVAD_ADAPTER_PRESENT
-	};
-
-	BaselineStatus establishBaseline();
-
-	void recordCurrentState();
-
 	//
-	// Restore TAP aliases to baseline state
+	// Identify the Mullvad TAP adapter
 	//
-	void rollbackTapAliases();
-
-	//
-	// Identify a single new TAP adapter
-	//
-	NetworkAdapter getNewAdapter();
+	NetworkAdapter getAdapter();
 
 	enum class DeletionResult
 	{
@@ -65,7 +49,4 @@ public:
 private:
 
 	static std::optional<NetworkAdapter> FindMullvadAdapter(const std::set<NetworkAdapter> &tapAdapters);
-
-	std::set<NetworkAdapter> m_baseline;
-	std::set<NetworkAdapter> m_currentState;
 };

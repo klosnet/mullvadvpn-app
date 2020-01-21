@@ -8,9 +8,6 @@
 #include <libcommon/network/nci.h>
 #include <log/log.h>
 
-#include <winsock2.h>
-#include <ws2ipdef.h>
-#include <iphlpapi.h>
 #include <windows.h>
 
 #include <vector>
@@ -386,66 +383,13 @@ std::optional<Context::NetworkAdapter> Context::FindMullvadAdapter(const std::se
 	return std::nullopt;
 }
 
-Context::BaselineStatus Context::establishBaseline()
+Context::NetworkAdapter Context::getAdapter()
 {
-	m_baseline = GetTapAdapters(TAP_HARDWARE_ID);
+	std::set<NetworkAdapter> added = GetTapAdapters(TAP_HARDWARE_ID);
 
-	if (m_baseline.empty())
+	if (added.size() > 1)
 	{
-		return BaselineStatus::NO_TAP_ADAPTERS_PRESENT;
-	}
-	
-	if (FindMullvadAdapter(m_baseline).has_value())
-	{
-		return BaselineStatus::MULLVAD_ADAPTER_PRESENT;
-	}
-
-	return BaselineStatus::SOME_TAP_ADAPTERS_PRESENT;
-}
-
-void Context::recordCurrentState()
-{
-	m_currentState = GetTapAdapters(TAP_HARDWARE_ID);
-}
-
-void Context::rollbackTapAliases()
-{
-	common::network::Nci nci;
-
-	for (const auto &adapter : m_currentState)
-	{
-		const auto oldInfo = m_baseline.find(adapter);
-		if (m_baseline.end() != oldInfo)
-		{
-			GUID guidObj = common::Guid::FromString(&adapter.guid[0]);
-
-			nci.setConnectionName(guidObj, oldInfo->alias.c_str());
-		}
-	}
-}
-
-Context::NetworkAdapter Context::getNewAdapter()
-{
-	std::list<NetworkAdapter> added;
-
-	for (const auto &adapter : m_currentState)
-	{
-		if (m_baseline.end() == m_baseline.find(adapter))
-		{
-			added.push_back(adapter);
-		}
-	}
-
-	if (added.size() == 0)
-	{
-		LogAdapters(L"Enumerable network TAP adapters", m_currentState);
-
-		THROW_ERROR("Unable to identify recently added TAP adapter");
-	}
-	else if (added.size() > 1)
-	{
-		LogAdapters(L"Enumerable network TAP adapters", m_currentState);
-		LogAdapters(L"New TAP adapters:", added);
+		LogAdapters(L"Enumerable network TAP adapters", added);
 
 		THROW_ERROR("Identified more TAP adapters than expected");
 	}
