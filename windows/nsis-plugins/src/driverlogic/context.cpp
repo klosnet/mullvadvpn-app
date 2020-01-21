@@ -285,23 +285,23 @@ std::set<Context::NetworkAdapter> GetTapAdapters(const std::wstring &tapHardware
 			THROW_WINDOWS_ERROR(lastError, "SetupDiEnumDeviceInfo() failed while enumerating network adapters");
 		}
 
-		//
-		// Check whether this is a TAP adapter
-		//
-
-		const auto hardwareId = GetDeviceRegistryStringProperty(devInfo, &devInfoData, SPDRP_HARDWAREID);
-		if (!hardwareId.has_value()
-			|| wcscmp(hardwareId.value().c_str(), tapHardwareId.c_str()) != 0)
-		{
-			continue;
-		}
-
-		//
-		// Construct NetworkAdapter
-		//
-
 		try
 		{
+			//
+			// Check whether this is a TAP adapter
+			//
+
+			const auto hardwareId = GetDeviceRegistryStringProperty(devInfo, &devInfoData, SPDRP_HARDWAREID);
+			if (!hardwareId.has_value()
+				|| wcscmp(hardwareId.value().c_str(), tapHardwareId.c_str()) != 0)
+			{
+				continue;
+			}
+
+			//
+			// Construct NetworkAdapter
+			//
+
 			const std::wstring guid = GetNetCfgInstanceId(devInfo, devInfoData);
 			GUID guidObj = common::Guid::FromString(guid);
 
@@ -419,7 +419,7 @@ Context::DeletionResult Context::DeleteOldMullvadAdapter()
 
 	if (INVALID_HANDLE_VALUE == devInfo)
 	{
-		THROW_WINDOWS_ERROR(GetLastError(), "SetupDiGetClassDevs() failed");
+		THROW_WINDOWS_ERROR(GetLastError(), "SetupDiGetClassDevsW() failed");
 	}
 
 	common::memory::ScopeDestructor cleanupDevList;
@@ -447,11 +447,18 @@ Context::DeletionResult Context::DeleteOldMullvadAdapter()
 			THROW_WINDOWS_ERROR(lastError, "Error enumerating network adapters");
 		}
 
-		const auto hardwareId = GetDeviceRegistryStringProperty(devInfo, &devInfoData, SPDRP_HARDWAREID);
-
-		if (hardwareId.has_value()
-			&& wcscmp(DEPRECATED_TAP_HARDWARE_ID, hardwareId.value().data()) == 0)
+		try
 		{
+			const auto hardwareId = GetDeviceRegistryStringProperty(devInfo, &devInfoData, SPDRP_HARDWAREID);
+
+			if (!hardwareId.has_value())
+			{
+				continue;
+			}
+			if (0 != wcscmp(DEPRECATED_TAP_HARDWARE_ID, hardwareId.value().data()))
+			{
+				continue;
+			}
 			if (0 != GetNetCfgInstanceId(devInfo, devInfoData).compare(mullvadGuid))
 			{
 				numRemainingAdapters++;
@@ -465,6 +472,16 @@ Context::DeletionResult Context::DeleteOldMullvadAdapter()
 			{
 				THROW_WINDOWS_ERROR(GetLastError(), "Error removing Mullvad TAP device");
 			}
+		}
+		catch (const std::exception & e)
+		{
+			//
+			// Log exception and skip this adapter
+			//
+
+			std::string msg = "Skipping TAP adapter due to exception caught while iterating: ";
+			msg.append(e.what());
+			PluginLog(std::wstring(msg.begin(), msg.end()));
 		}
 	}
 
