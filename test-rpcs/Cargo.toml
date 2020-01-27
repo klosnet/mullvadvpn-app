@@ -1,0 +1,16 @@
+[package]
+name = "test-rpcs"
+version = "0.1.0"
+authors = ["Emīls <emils@mullvad.net>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+hyper-openssl = "0.5"
+hyper = "0.11"
+tokio-core = "0.1"
+mullvad-rpc = { path = "../mullvad-rpc" }
+mullvad-types = { path = "../mullvad-types" }
+talpid-types = { path = "../talpid-types" }
+futures = "0.1.15"

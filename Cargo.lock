@@ -2554,6 +2554,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "test-rpcs"
+version = "0.1.0"
+dependencies = [
+ "futures 0.1.29 (registry+https://github.com/rust-lang/crates.io-index)",
+ "hyper 0.11.27 (registry+https://github.com/rust-lang/crates.io-index)",
+ "hyper-openssl 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "mullvad-rpc 0.1.0",
+ "mullvad-types 0.1.0",
+ "talpid-types 0.1.0",
+ "tokio-core 0.1.17 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "textwrap"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
